@@ -1,0 +1,6 @@
+Para perceptron utilizar el archivo data3.csv
+Al ejecutar el programa se solicita al usuario introducir la ruta donde esta guardado el archivo csv y regresa los scores y al final el promedio de la precision
+
+para arboles utilizar el archivo data.csv
+Al ejecutar el programa se solicita al usuario introducir la ruta donde esta guardado el archivo csv y regresa el arbol creado con el promedio al final y una grafica que
+muesta el desempeño del algoritmo

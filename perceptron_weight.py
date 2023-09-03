@@ -5,7 +5,7 @@ from random import seed
 from random import randrange
 from csv import reader
 
-# Load a CSV file
+# Cargar archivo CSV y leerlo fila por fila
 def load_csv(filename):
 	dataset = list()
 	with open(filename, 'r') as file:
@@ -16,12 +16,12 @@ def load_csv(filename):
 			dataset.append(row)
 	return dataset
 
-# convertir string a float
+# convertir string a float las primeras 3 columnas 
 def str_column_to_float(dataset, column):
 	for row in dataset:
 		row[column] = float(row[column].strip())
 
-# convertir columna de string a integer 
+# convertir columna de string a integer la ultima columna
 def str_column_to_int(dataset, column):
 	class_values = [row[column] for row in dataset]
 	unique = set(class_values)
@@ -32,7 +32,8 @@ def str_column_to_int(dataset, column):
 		row[column] = lookup[row[column]]
 	return lookup
 
-# Dividir dataset en k folds 
+# Dividir dataset en k folds implementando cross-validation para evaluar
+# y probar el rendimiento del modelo y encontrar el mejor modelo
 def cross_validation_split(dataset, n_folds):
 	dataset_split = list()
 	dataset_copy = list(dataset)
@@ -45,7 +46,7 @@ def cross_validation_split(dataset, n_folds):
 		dataset_split.append(fold)
 	return dataset_split
 
-# Calcular precision 
+# Calcular la metrica de precision 
 def accuracy_metric(actual, predicted):
 	correct = 0
 	for i in range(len(actual)):
@@ -80,6 +81,7 @@ def predict(row, weights):
 	return 1.0 if activation >= 0.0 else 0.0
 
 # Estimar pesos de Perceptron usando descenso de gradiente estocástico
+#funcion dd entrenamiento de pesos
 def train_weights(train, l_rate, n_epoch):
 	weights = [0.0 for i in range(len(train[0]))]
 	for epoch in range(n_epoch):
@@ -89,7 +91,7 @@ def train_weights(train, l_rate, n_epoch):
 			weights[0] = weights[0] + l_rate * error
 			for i in range(len(row)-1):
 				weights[i + 1] = weights[i + 1] + l_rate * error * row[i]
-	return weights
+	return weights #regresa los pesos
 
 # Algoritmo de perceptrón con descenso de gradiente estocástico
 def perceptron(train, test, l_rate, n_epoch):
@@ -98,26 +100,32 @@ def perceptron(train, test, l_rate, n_epoch):
 	for row in test:
 		prediction = predict(row, weights)
 		predictions.append(prediction)
-	return(predictions)
+	return(predictions) #regresa las predicciones
 
-# Probar con el dataset
+# Probar con el dataset de pesos de diabetes
 seed(1)
-# Solicitar al usuario indicar la ruta donde se encuentra el csv 
+# Solicitar al usuario indicar la ruta donde se encuentra el archivo csv 
 filename = input("Introduce la ruta del archivo que deseas cargar: ")
 try:
     #filename = 'C:/Users/rocky/OneDrive/Documentos/Machine learning/data3.csv'
     dataset = load_csv(filename)
+	#cambiar de string a float
     for i in range(len(dataset[0])-1):
 	    str_column_to_float(dataset, i)
     # cambiar de string a integers
     str_column_to_int(dataset, len(dataset[0])-1)
     # evaluar el algoritmo
     n_folds = 3
+	#learning rate
     l_rate = 0.1
+	#epocas
     n_epoch = 50
+	#evaluar el algoritmo y obtener las metricas del modelo
     scores = evaluate_algorithm(dataset, perceptron, n_folds, l_rate, n_epoch)
+	#imprimir los scores y las metricas
     print('Scores: %s' % scores)
     print('Mean Accuracy: %.3f%%' % (sum(scores)/float(len(scores))))
 
+#si no se encunetra el archivo se regresa este mensaje
 except FileNotFoundError:
     print("Archivo no encontrado.")

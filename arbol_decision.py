@@ -1,17 +1,17 @@
 #para este codigo utilizar el archivo data.csv
 
-
+#importar librerias
 import numpy as np
 import pandas as pd
 
-#leemos los datos
+#leemos los datos ingresados por el usuario por csv
 
 filename=input("Ingresa la ruta donde se encuentra el archivo csv: ")
 data = pd.read_csv(filename, skiprows=1, header=None)
 col_names=list(data.columns)
 
 
-
+#inicializamos la clase nodo
 class Node():
     def __init__(self, feature_index=None, threshold=None, left=None, right=None, info_gain=None, value=None):
        
@@ -22,7 +22,7 @@ class Node():
         self.info_gain = info_gain
         self.value = value
 
-#clase para el arbol 
+#clase para el arbol dando el minimo de split y max depth
 
 class DecisionTreeClassifier():
     def __init__(self, min_samples_split=2, max_depth=2):
@@ -53,8 +53,8 @@ class DecisionTreeClassifier():
                             left_subtree, right_subtree, best_split["info_gain"])
 
         leaf_value = self.calculate_leaf_value(Y)
-        return Node(value=leaf_value)
-
+        return Node(value=leaf_value) #regresamos el nodo
+    #funcion para obtener el mejor split
     def get_best_split(self, dataset, num_samples, num_features):
 
         best_split = {}
@@ -78,7 +78,7 @@ class DecisionTreeClassifier():
 
         # regresar la mejor division
         return best_split
-
+    #dividir dataset en derecha e izquierda
     def split(self, dataset, feature_index, threshold):
 
         dataset_left = np.array([row for row in dataset if row[feature_index]<=threshold])
@@ -105,7 +105,7 @@ class DecisionTreeClassifier():
             p_cls = len(y[y == cls]) / len(y)
             entropy += -p_cls * np.log2(p_cls)
         return entropy
-
+    #valor de gini
     def gini_index(self, y):
 
         class_labels = np.unique(y)
@@ -119,7 +119,7 @@ class DecisionTreeClassifier():
 
         Y = list(Y)
         return max(Y, key=Y.count)
-
+    #imprimimos el arbol
     def print_tree(self, tree=None, indent=" "):
 
         if not tree:
@@ -134,21 +134,19 @@ class DecisionTreeClassifier():
             self.print_tree(tree.left, indent + indent)
             print("%sright:" % (indent), end="")
             self.print_tree(tree.right, indent + indent)
-
+    
+    #funcion para entrenar el arbol
     def fit(self, X, Y):
-        ''' function to train the tree '''
 
         dataset = np.concatenate((X, Y), axis=1)
         self.root = self.build_tree(dataset)
-
+    #funcion para predecir en el dataset
     def predict(self, X):
-        ''' function to predict new dataset '''
 
         preditions = [self.make_prediction(x, self.root) for x in X]
         return preditions
     #hacemos las predicciones
     def make_prediction(self, x, tree):
-        ''' function to predict a single data point '''
 
         if tree.value!=None: return tree.value
         feature_val = x[tree.feature_index]
@@ -173,8 +171,20 @@ classifier.print_tree()
 #test al modelo 
 
 Y_pred = classifier.predict(X_test)
-from sklearn.metrics import accuracy_score
-print("Precision: " + str(accuracy_score(Y_test, Y_pred)))
+
+#librerias para las metricas 
+from sklearn.metrics import accuracy_score, confusion_matrix,classification_report
+
+#matriz de confusion
+conf_matrix=confusion_matrix(Y_test,Y_pred)
+print("matriz de confusion")
+print(conf_matrix)
+
+#reporte de clasificacion
+reporte=classification_report(Y_test,Y_pred)
+print("Reporte de clasificacion")
+print(reporte)
+
 
 
 #importamos librerias para poder testear el accuracy de nuestro modelo y verlo graficamente

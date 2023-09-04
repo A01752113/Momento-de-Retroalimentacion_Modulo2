@@ -4,6 +4,8 @@
 from random import seed
 from random import randrange
 from csv import reader
+import pandas as pd
+import numpy as np
 
 # Cargar archivo CSV y leerlo fila por fila
 def load_csv(filename):
@@ -54,6 +56,18 @@ def accuracy_metric(actual, predicted):
 			correct += 1
 	return correct / float(len(actual)) * 100.0
 
+# Función para calcular el recall
+def recall_metric(actual, predicted):
+    true_positives = 0
+    false_negatives = 0
+    for i in range(len(actual)):
+        if actual[i] == 1 and predicted[i] == 1:
+            true_positives += 1
+        if actual[i] == 1 and predicted[i] == 0:
+            false_negatives += 1
+    recall = true_positives / (true_positives + false_negatives)
+    return recall
+
 # Evaluar el algoritmo con cross validation 
 def evaluate_algorithm(dataset, algorithm, n_folds, *args):
 	folds = cross_validation_split(dataset, n_folds)
@@ -70,8 +84,50 @@ def evaluate_algorithm(dataset, algorithm, n_folds, *args):
 		predicted = algorithm(train_set, test_set, *args)
 		actual = [row[-1] for row in fold]
 		accuracy = accuracy_metric(actual, predicted)
+		recall = recall_metric(actual, predicted)
 		scores.append(accuracy)
+			
 	return scores
+
+# Evaluar el algoritmo con cross validation y calcular el recall
+def evaluate_algorithmRecall(dataset, algorithm, n_folds, *args):
+    folds = cross_validation_split(dataset, n_folds)
+    recalls = list()
+    for fold in folds:
+        train_set = list(folds)
+        train_set.remove(fold)
+        train_set = sum(train_set, [])
+        test_set = list()
+        for row in fold:
+            row_copy = list(row)
+            test_set.append(row_copy)
+            row_copy[-1] = None
+        predicted = algorithm(train_set, test_set, *args)
+        actual = [row[-1] for row in fold]
+        recall = recall_metric(actual, predicted)
+        recalls.append(recall)
+    return recalls
+
+# Evaluar el algoritmo con cross validation y obtener las predicciones y etiquetas reales
+def evaluate_algorithmConfussionMatrix(dataset, algorithm, n_folds, *args):
+    folds = cross_validation_split(dataset, n_folds)
+    predictions = list()
+    actual_labels = list()
+    for fold in folds:
+        train_set = list(folds)
+        train_set.remove(fold)
+        train_set = sum(train_set, [])
+        test_set = list()
+        for row in fold:
+            row_copy = list(row)
+            test_set.append(row_copy)
+            row_copy[-1] = None
+        predicted = algorithm(train_set, test_set, *args)
+        actual = [row[-1] for row in fold]
+        predictions.extend(predicted)
+        actual_labels.extend(actual)
+    return actual_labels, predictions
+
 
 # Hacer las predicciones con los pesos 
 def predict(row, weights):
@@ -122,10 +178,35 @@ try:
     n_epoch = 50
 	#evaluar el algoritmo y obtener las metricas del modelo
     scores = evaluate_algorithm(dataset, perceptron, n_folds, l_rate, n_epoch)
+    recalls = evaluate_algorithmRecall(dataset, perceptron, n_folds, l_rate, n_epoch)
+
+	# Evaluar el algoritmo y obtener las etiquetas reales y predicciones
+    actual_labels, predictions = evaluate_algorithmConfussionMatrix(dataset, perceptron, n_folds, l_rate, n_epoch)
+
+	#calcular la media de precision y media de recall
+    meanAccuracy= sum(scores)/float(len(scores))
+    meanRecall= sum(recalls)/float(len(recalls))
+    
+	#calcular la matriz de confusion
+    confusion_matrix = pd.crosstab(np.array(actual_labels), np.array(predictions), rownames=['Actual'], colnames=['Predicted'])
+
+    # Calcular f1 score con los valores obtenidos de accuracy y recall
+    f1score = 2*((meanAccuracy*meanRecall)/(meanAccuracy+meanRecall))
+
 	#imprimir los scores y las metricas
     print('Scores: %s' % scores)
-    print('Mean Accuracy: %.3f%%' % (sum(scores)/float(len(scores))))
+    print('Recall: %s' % recalls)
 
-#si no se encunetra el archivo se regresa este mensaje
+
+    print('Mean Accuracy: %.3f%%' % meanAccuracy)
+
+    print('Mean Recall: %.3f%%' % meanRecall)
+    print('F1Score: %s' % f1score)
+    print("\nMatriz de confusion")
+    print(confusion_matrix)
+
+
+
+#si no se encuentra el archivo se regresa este mensaje
 except FileNotFoundError:
     print("Archivo no encontrado.")

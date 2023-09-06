@@ -218,4 +218,13 @@ plt.plot(depths, mean_accuracies,'go--')
 plt.xlabel('Profundidad del arbol')
 plt.ylabel('Accuracy Promedio')
 plt.title('Desempeño del arbol respecto a su profundidad')
+#plt.show()
+
+import seaborn as sns
+# Mostrar la matriz de confusión de manera gráfica
+plt.figure(figsize=(6, 6))
+sns.heatmap(conf_matrix, annot=True, fmt="d", cmap="Blues", cbar=False)
+plt.xlabel("Predicted Labels")
+plt.ylabel("True Labels")
+plt.title("Matriz de Confusión")
 plt.show()
